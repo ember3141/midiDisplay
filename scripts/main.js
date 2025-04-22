@@ -1,11 +1,23 @@
 let midiInput;
-// let activeNotes = {};
 let noteSounds = {};
 
+let releasedNotes = [];
+const MESSAGE_LIFETIME = 3000;
+
+let messageStates = {};
+
+const messages = {
+  c: "Continuously track progress and gather feedback to identify opportunities.",
+  d: "Diversify service offerings by expanding lessons, workshops, and digital resources.",
+  e: "Evaluate existing products and services to identify areas for improvement.",
+  f: "Focus on personalized services to enhance the customer experience.",
+  g: "Gauge the competition to become a leading business within the market.",
+  a: "Analyze customer feedback to refine your products and services.",
+  b: "Balance growth with sustainability, reinvesting profits to improve the business.",
+}
 function preload() {
   soundFormats('mp3');
 
-  // Only the filenames from the screenshot
   const availableNotes = [
     'a-3', 'a-4', 'a-5', 'a3', 'a4', 'a5',
     'b3', 'b4', 'b5',
@@ -15,6 +27,7 @@ function preload() {
     'f-3', 'f-4', 'f-5', 'f3', 'f4', 'f5',
     'g-3', 'g-4', 'g-5', 'g3', 'g4', 'g5'
   ];
+
 
   for (let note of availableNotes) {
     noteSounds[note] = loadSound(`sounds/piano/${note}.mp3`);
@@ -28,19 +41,53 @@ function setup() {
   midiInput = new MIDIInput();
   midiInput.onMIDIMessage = onMIDIMessage;
   background(0);
+  userStartAudio();
 }
 
 function draw() {
-  background(0, 0.9);
-  fill(255);
+  background(0);
   textSize(20);
-  let y = 50;
-  for (let note in activeNotes) {
+  const now = millis();
+
+  const allNotes = Array.from(new Set([
+    ...activeNotes,
+    ...Object.keys(messageStates)
+  ])).sort();
+
+  for (let i = 0; i < allNotes.length; i++) {
+    const note = allNotes[i];
+    const y = 70 + i * 48;
+    const firstChar = note.charAt(0);
+
+    if (!messages.hasOwnProperty(firstChar)) continue;
+
+    let alpha = 255;
+    if (messageStates[note]?.fading) {
+      const elapsed = now - messageStates[note].releasedAt;
+      if (elapsed >= MESSAGE_LIFETIME) {
+        delete messageStates[note];
+        continue;
+      }
+      alpha = map(elapsed, 0, MESSAGE_LIFETIME, 255, 0);
+    }
+
+    fill(255, alpha);
     text(`Note: ${note}`, 50, y);
-    y += 30;
+const message = messages[firstChar];
+const firstLetter = message.charAt(0);
+const rest = message.slice(1);
+
+push();
+
+textSize(48);
+text(firstLetter,windowWidth / 4,windowHeight / 4 + y);
+
+textSize(20);
+text(rest,(windowWidth / 4) +textWidth(firstLetter)*2.3,windowHeight / 4 + y)
+pop();
   }
-//   console.log(activeNotes.note)
 }
+
 
 function midiNoteToNoteName(midiNote) {
   const noteNames = ['c', 'c-', 'd', 'd-', 'e', 'f', 'f-', 'g', 'g-', 'a', 'a-', 'b'];
@@ -50,14 +97,14 @@ function midiNoteToNoteName(midiNote) {
     octave += 1;
   }
 
-    if (midiNote === 71) {  
-      octave += 1;  
-    }
-    if (midiNote === 83) {  
-        octave += 1;  
-      }
-   
-  
+  if (midiNote === 71) {
+    octave += 1;
+  }
+  if (midiNote === 83) {
+    octave += 1;
+  }
+
+
   return note + octave;
 }
 
@@ -67,12 +114,14 @@ function onMIDIMessage(data) {
   const msg = new MIDI_Message(data.data);
   const noteName = midiNoteToNoteName(msg.note);
 
-//   console.log("MIDI Msg:", msg.type, msg.note, msg.velocity, noteName);
 
   if (msg.type === MIDI_Message.NOTE_ON) {
-    // Ignore duplicate presses of same note
-    if (!activeNotes.has(noteName)) {
-      activeNotes.add(noteName);
+    activeNotes.add(noteName);
+    messageStates[noteName] = { fading: false };
+    
+      if (!messageStates[noteName]) {
+        messageStates[noteName] = { fading: false, releasedAt: null };
+      }
       const sound = noteSounds[noteName];
       if (sound) {
         sound.playMode('sustain');
@@ -80,8 +129,13 @@ function onMIDIMessage(data) {
       } else {
         console.warn("Missing sound for", noteName);
       }
-    }
+    
   } else if (msg.type === MIDI_Message.NOTE_OFF) {
     activeNotes.delete(noteName);
-  }
+    if (!messageStates[noteName]) {
+      messageStates[noteName] = {};
+    }
+    messageStates[noteName].fading = true;
+    messageStates[noteName].releasedAt = millis();
+}
 }

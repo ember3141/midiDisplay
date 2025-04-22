@@ -12,8 +12,6 @@ class MIDI_Message {
         this.note = data[1];
         this.velocity = data[2];
         
-        // FIXED: Only check velocity after setting it
-        // And do this check only once, at the end
         if (this.velocity === 0 && this.type === MIDI_Message.NOTE_ON) {
             this.type = MIDI_Message.NOTE_OFF;
         }
@@ -57,7 +55,6 @@ class MIDIInput {
     }
 
     onMIDIFailure(e) {
-        // when we get a failed response, run this code
         console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
     }
 }
