@@ -2,7 +2,7 @@ let midiInput;
 let noteSounds = {};
 
 let releasedNotes = [];
-const MESSAGE_LIFETIME = 3000;
+const MESSAGE_LIFETIME = 15000;
 
 let messageStates = {};
 
@@ -16,6 +16,8 @@ const messages = {
   b: "Balance growth with sustainability, reinvesting profits to improve the business.",
 }
 function preload() {
+  bg = loadImage('style/deca.png');
+  gothamFont = loadFont('style/gotham-bold.ttf');
   soundFormats('mp3');
 
   const availableNotes = [
@@ -45,8 +47,9 @@ function setup() {
 }
 
 function draw() {
-  background(0);
-  textSize(20);
+  background(bg);
+    textSize(20);
+    textFont(gothamFont);
   const now = millis();
 
   const allNotes = Array.from(new Set([
