@@ -10,7 +10,7 @@ const messages = {
   c: "Continuously track progress and gather feedback to identify opportunities.",
   d: "Diversify service offerings by expanding lessons, workshops, and digital resources.",
   e: "Evaluate existing products and services to identify areas for improvement.",
-  f: "Focus on personalized services to enhance the customer experience.",
+  f: "Forecast upcoming trends and shifts in the music education market to stay ahead of the curve.",
   g: "Gauge the competition to become a leading business within the market.",
   a: "Analyze customer feedback to refine your products and services.",
   b: "Balance growth with sustainability, reinvesting profits to improve the business.",
@@ -89,6 +89,17 @@ textSize(20);
 text(rest,(windowWidth / 4) +textWidth(firstLetter)*2.3,windowHeight / 4 + y)
 pop();
   }
+  // console.log(allNotes)
+  // console.log(messageStates)
+  if(allNotes.length>0){
+    textSize(100)
+    const mostRecentKey = Object.entries(messageStates)
+    .filter(([_, state]) => state.pressedAt !== undefined)
+    .sort((a, b) => b[1].pressedAt - a[1].pressedAt)[0][0];
+      // console.log(mostRecentKey)
+    var thing=messages[mostRecentKey.charAt(0)].split(" ")[0];
+  text(thing, windowWidth/2-(textWidth(thing)/2), 90);
+}
 }
 
 
@@ -116,15 +127,22 @@ const activeNotes = new Set();
 function onMIDIMessage(data) {
   const msg = new MIDI_Message(data.data);
   const noteName = midiNoteToNoteName(msg.note);
-
-
+  
   if (msg.type === MIDI_Message.NOTE_ON) {
-    activeNotes.add(noteName);
-    messageStates[noteName] = { fading: false };
+    if (noteName.charAt(1) !== '-') {
+      activeNotes.add(noteName);
+    }
+  
+    if (!messageStates[noteName]) {
+      messageStates[noteName] = {};
+    }
     
-      if (!messageStates[noteName]) {
-        messageStates[noteName] = { fading: false, releasedAt: null };
-      }
+    // messageStates[noteName].fading = false;
+    messageStates[noteName].pressedAt = millis(); // <- Add this line
+  
+  messageStates[noteName].fading = false;
+  // Don't overwrite releasedAt here — keep the old one if it exists
+  
       const sound = noteSounds[noteName];
       if (sound) {
         sound.playMode('sustain');
@@ -132,8 +150,7 @@ function onMIDIMessage(data) {
       } else {
         console.warn("Missing sound for", noteName);
       }
-    
-  } else if (msg.type === MIDI_Message.NOTE_OFF) {
+     } else if (msg.type === MIDI_Message.NOTE_OFF) {
     activeNotes.delete(noteName);
     if (!messageStates[noteName]) {
       messageStates[noteName] = {};
@@ -141,4 +158,5 @@ function onMIDIMessage(data) {
     messageStates[noteName].fading = true;
     messageStates[noteName].releasedAt = millis();
 }
+// console.log(messageStates)
 }
