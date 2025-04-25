@@ -75,7 +75,7 @@ function draw() {
     }
 
     fill(255, alpha);
-    text(`Note: ${note}`, 50, y);
+    // text(`Note: ${note}`, 50, y);
 const message = messages[firstChar];
 const firstLetter = message.charAt(0);
 const rest = message.slice(1);
@@ -98,7 +98,7 @@ pop();
     .sort((a, b) => b[1].pressedAt - a[1].pressedAt)[0][0];
       // console.log(mostRecentKey)
     var thing=messages[mostRecentKey.charAt(0)].split(" ")[0];
-  text(thing, windowWidth/2-(textWidth(thing)/2), 90);
+  text(thing, windowWidth/2-(textWidth(thing)/2), windowHeight/4);
 }
 }
 
