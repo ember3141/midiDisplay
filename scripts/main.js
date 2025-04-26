@@ -1,6 +1,6 @@
 let midiInput;
 let noteSounds = {};
-
+let started = false;
 let releasedNotes = [];
 const MESSAGE_LIFETIME = 15000;
 
@@ -43,13 +43,17 @@ function setup() {
   midiInput = new MIDIInput();
   midiInput.onMIDIMessage = onMIDIMessage;
   background(0);
-  userStartAudio();
+  // userStartAudio();
 }
 
 function draw() {
   background(bg);
     textSize(20);
+    fill(255)
     textFont(gothamFont);
+    if (!started) {
+      text('Click to Start', width / 2, height / 2);
+    } else {
   const now = millis();
 
   const allNotes = Array.from(new Set([
@@ -99,6 +103,7 @@ pop();
       // console.log(mostRecentKey)
     var thing=messages[mostRecentKey.charAt(0)].split(" ")[0];
   text(thing, windowWidth/2-(textWidth(thing)/2), windowHeight/4);
+}
 }
 }
 
@@ -159,4 +164,16 @@ function onMIDIMessage(data) {
     messageStates[noteName].releasedAt = millis();
 }
 // console.log(messageStates)
+}
+
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function mousePressed() {
+  if (!started) {
+    userStartAudio(); // <-- unlocks the audio
+    started = true;
+  }
 }
